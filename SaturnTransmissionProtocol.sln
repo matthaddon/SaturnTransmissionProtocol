@@ -5,6 +5,8 @@ VisualStudioVersion = 15.0.27428.2043
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SaturnTransmissionProtocol", "SaturnTransmissionProtocol\SaturnTransmissionProtocol.csproj", "{55966D27-4A76-4F43-83B0-C838C4D49210}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SimpleTCP", "SimpleTCP\SimpleTCP.csproj", "{E4C1BF25-5871-485F-907A-416994A647B9}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{55966D27-4A76-4F43-83B0-C838C4D49210}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{55966D27-4A76-4F43-83B0-C838C4D49210}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{55966D27-4A76-4F43-83B0-C838C4D49210}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E4C1BF25-5871-485F-907A-416994A647B9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E4C1BF25-5871-485F-907A-416994A647B9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E4C1BF25-5871-485F-907A-416994A647B9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E4C1BF25-5871-485F-907A-416994A647B9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

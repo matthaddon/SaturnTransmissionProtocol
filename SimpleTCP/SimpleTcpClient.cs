@@ -15,13 +15,15 @@ namespace SimpleTCP
 		{
 			StringEncoder = System.Text.Encoding.UTF8;
 			ReadLoopIntervalMs = 10;
-			Delimiter = 0x13;
+            Delimiter = 0x13;
+            UseDelimiter = true;
 		}
 
 		private Thread _rxThread = null;
 		private List<byte> _queuedMsg = new List<byte>();
 		public byte Delimiter { get; set; }
-		public System.Text.Encoding StringEncoder { get; set; }
+        public bool UseDelimiter { get; set; }
+        public System.Text.Encoding StringEncoder { get; set; }
 		private TcpClient _client = null;
 
 		public event EventHandler<Message> DelimiterDataReceived;
@@ -106,7 +108,7 @@ namespace SimpleTCP
 				byte[] nextByte = new byte[1];
 				c.Client.Receive(nextByte, 0, 1, SocketFlags.None);
 				bytesReceived.AddRange(nextByte);
-				if (nextByte[0] == delimiter)
+				if (UseDelimiter && nextByte[0] == delimiter)
 				{
 					byte[] msg = _queuedMsg.ToArray();
 					_queuedMsg.Clear();
