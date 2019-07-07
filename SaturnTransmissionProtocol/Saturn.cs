@@ -60,9 +60,10 @@ namespace SaturnTP
             int stx = CheckSTX(chunk, index);
             int etx = CheckETX(chunk, index);
 
+            bool includeCRC = false;
             if(etx != -1)
             {
-                //Include CRC
+                includeCRC = true;
                 etx++;
             }
 
@@ -76,7 +77,7 @@ namespace SaturnTP
                         {
                             currentMessage.Add(chunk[i]);
                         }
-                        currentMessage.Insert(0, STX);
+                        //currentMessage.Insert(0, STX);
                         ReadMessage(currentMessage.ToArray());
                         currentMessage.Clear();
                     }
@@ -94,13 +95,24 @@ namespace SaturnTP
                     {
                         messageCount++;
                         currentMessage.Clear();
+                        bool missingCRC = false;
                         for (int i = stx; i <= etx; i++)
                         {
-                            currentMessage.Add(chunk[i]);
+                            if (i >= 0 && i <= chunk.Length - 1)
+                            {
+                                currentMessage.Add(chunk[i]);
+                            } else
+                            {
+                                missingCRC = true;
+                                Console.WriteLine("Missing CRC:" + i);
+                            }
                         }
-                        currentMessage.Insert(0, STX);
-                        ReadMessage(currentMessage.ToArray());
-                        currentMessage.Clear();
+                        if (!missingCRC)
+                        {
+                            includeCRC = false;
+                            ReadMessage(currentMessage.ToArray());
+                            currentMessage.Clear();
+                        }
                     }
                 }
             }
@@ -121,7 +133,7 @@ namespace SaturnTP
                     {
                         currentMessage.Add(chunk[i]);
                     }
-                    currentMessage.Insert(0, STX);
+                    //currentMessage.Insert(0, STX);
                     ReadMessage(currentMessage.ToArray());
                     currentMessage.Clear();
                 }
@@ -129,18 +141,18 @@ namespace SaturnTP
 
             if (etx != -1)
             {
-                if (etx < chunk.Length)
+                if (etx < chunk.Length-1)
                 {
-                    StreamChunks(chunk, etx+1);
+                    StreamChunks(chunk, etx + (includeCRC ? 0 : 1));
                 }
             }
         }
-
+        
         private void ReadMessage(byte[] messageBytes)
         {
             bytesReceived = 0;
             int msgIdx = 0;
-            if (CheckSum(messageBytes, messageBytes.Length-1) == messageBytes[messageBytes.Length-1])
+            if (CheckSum(messageBytes, messageBytes.Length - 1) == messageBytes[messageBytes.Length - 1])
             {
                 IMessage message = GetMessageType(messageBytes, ref msgIdx);
                 if (message != null)
@@ -151,7 +163,7 @@ namespace SaturnTP
                 }
             }
         }
-        
+
         public byte CheckSum(byte[] _PacketData, int PacketLength)
         {
             Byte _CheckSumByte = 0x00;
@@ -246,7 +258,7 @@ namespace SaturnTP
 
             return null;
         }
-        
+
         public static string ReadInformation(List<Information> InformationList, byte[] Information)
         {
             foreach (Information info in InformationList)
@@ -256,7 +268,7 @@ namespace SaturnTP
                     if (info.position + info.bytes < Information.Length)
                     {
                         byte[] informationBytes = new byte[info.bytes];
-                        Buffer.BlockCopy(Information, info.position, informationBytes, 0, info.bytes);
+                        Buffer.BlockCopy(Information, info.position-1, informationBytes, 0, info.bytes);
                         info.informationBytes = informationBytes;
                     }
                 }
