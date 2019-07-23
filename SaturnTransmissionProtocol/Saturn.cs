@@ -35,6 +35,7 @@ namespace SaturnTP
         
         int messageCount = 0;
         List<byte> currentMessage = new List<byte>();
+        bool nextCRC = false;
         long bytesReceived = 0;
 
         public Action<IMessage> messageCallback;
@@ -53,101 +54,48 @@ namespace SaturnTP
             return bytesReceived;
         }
 
-        public void StreamChunks(byte[] chunk, int index = 0)
+        public void StreamChunks(byte[] chunk)
+        {
+            for (int i = 0; i < chunk.Length; i++)
+            {
+                StreamChunk(new byte[] { chunk[i] });
+            }
+        }
+
+        public void StreamChunk(byte[] chunk)
         {
             bytesReceived += chunk.Length;
 
-            int stx = CheckSTX(chunk, index);
-            int etx = CheckETX(chunk, index);
-
-            bool includeCRC = false;
-            if(etx != -1)
+            if (nextCRC)
             {
-                includeCRC = true;
-                etx++;
+                nextCRC = false;
+                currentMessage.Add(chunk[0]);
+                ReadMessage(currentMessage.ToArray());
+                return;
             }
 
-            if (stx != -1 && etx != -1)
+            int stx = CheckSTX(chunk);
+            if (stx != -1)
             {
-                if (etx < stx)
-                {
-                    if (currentMessage.Count > 0)
-                    {
-                        for (int i = index; i <= etx; i++)
-                        {
-                            currentMessage.Add(chunk[i]);
-                        }
-                        //currentMessage.Insert(0, STX);
-                        ReadMessage(currentMessage.ToArray());
-                        currentMessage.Clear();
-                    }
-
-                    messageCount++;
-                    currentMessage.Clear();
-                    for (int i = stx; i < chunk.Length; i++)
-                    {
-                        currentMessage.Add(chunk[i]);
-                    }
-                }
-                else
-                {
-                    if (currentMessage.Count > 0)
-                    {
-                        messageCount++;
-                        currentMessage.Clear();
-                        bool missingCRC = false;
-                        for (int i = stx; i <= etx; i++)
-                        {
-                            if (i >= 0 && i <= chunk.Length - 1)
-                            {
-                                currentMessage.Add(chunk[i]);
-                            } else
-                            {
-                                missingCRC = true;
-                                Console.WriteLine("Missing CRC:" + i);
-                            }
-                        }
-                        if (!missingCRC)
-                        {
-                            includeCRC = false;
-                            ReadMessage(currentMessage.ToArray());
-                            currentMessage.Clear();
-                        }
-                    }
-                }
-            }
-            else if (stx != -1)
-            {
-                messageCount++;
+                nextCRC = false;
                 currentMessage.Clear();
-                for (int i = stx; i < chunk.Length; i++)
-                {
-                    currentMessage.Add(chunk[i]);
-                }
-            }
-            else if (etx != -1)
-            {
-                if (currentMessage.Count > 0)
-                {
-                    for (int i = index; i <= etx; i++)
-                    {
-                        currentMessage.Add(chunk[i]);
-                    }
-                    //currentMessage.Insert(0, STX);
-                    ReadMessage(currentMessage.ToArray());
-                    currentMessage.Clear();
-                }
+                currentMessage.Add(chunk[0]);
+                return;
             }
 
+            int etx = CheckETX(chunk);
             if (etx != -1)
             {
-                if (etx < chunk.Length-1)
-                {
-                    StreamChunks(chunk, etx + (includeCRC ? 0 : 1));
-                }
+                nextCRC = true;
+                currentMessage.Add(chunk[0]);
+                return;
+
             }
+
+            //If not stx, etx or possible crc then we are just part of a message.
+            currentMessage.Add(chunk[0]);
         }
-        
+
         private void ReadMessage(byte[] messageBytes)
         {
             bytesReceived = 0;
